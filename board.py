@@ -36,74 +36,46 @@ class Board:
         print('Displaying board')
 
     def init(self):
+        pieces = {
+            'a1': (self.WHITE, 'r'),
+            'b1': (self.WHITE, 'n'),
+            'c1': (self.WHITE, 'b'),
+            'd1': (self.WHITE, 'q'),
+            'e1': (self.WHITE, 'k'),
+            'f1': (self.WHITE, 'b'),
+            'g1': (self.WHITE, 'n'),
+            'h1': (self.WHITE, 'r'),
+            'a2': (self.WHITE, 'p'),
+            'b2': (self.WHITE, 'p'),
+            'c2': (self.WHITE, 'p'),
+            'd2': (self.WHITE, 'p'),
+            'e2': (self.WHITE, 'p'),
+            'f2': (self.WHITE, 'p'),
+            'g2': (self.WHITE, 'p'),
+            'h2': (self.WHITE, 'p'),
+            'a7': (self.BLACK, 'p'),
+            'b7': (self.BLACK, 'p'),
+            'c7': (self.BLACK, 'p'),
+            'd7': (self.BLACK, 'p'),
+            'e7': (self.BLACK, 'p'),
+            'f7': (self.BLACK, 'p'),
+            'g7': (self.BLACK, 'p'),
+            'h7': (self.BLACK, 'p'),
+            'a8': (self.BLACK, 'r'),
+            'b8': (self.BLACK, 'n'),
+            'c8': (self.BLACK, 'b'),
+            'd8': (self.BLACK, 'q'),
+            'e8': (self.BLACK, 'k'),
+            'f8': (self.BLACK, 'b'),
+            'g8': (self.BLACK, 'n'),
+            'h8': (self.BLACK, 'r'),
+        }
+        
         for square in self.squares:
-            match square:
-                case 'a1':
-                    self.board[square] = Piece(self.WHITE, 'r')
-                case 'b1':
-                    self.board[square] = Piece(self.WHITE, 'n')
-                case 'c1':
-                    self.board[square] = Piece(self.WHITE, 'b')
-                case 'd1':
-                    self.board[square] = Piece(self.WHITE, 'q')
-                case 'e1':
-                    self.board[square] = Piece(self.WHITE, 'k')
-                case 'f1':
-                    self.board[square] = Piece(self.WHITE, 'b')
-                case 'g1':
-                    self.board[square] = Piece(self.WHITE, 'n')
-                case 'h1':
-                    self.board[square] = Piece(self.WHITE, 'r')
-                case 'a2':
-                    self.board[square] = Piece(self.WHITE, 'p')
-                case 'b2':
-                    self.board[square] = Piece(self.WHITE, 'p')
-                case 'c2':
-                    self.board[square] = Piece(self.WHITE, 'p')
-                case 'd2':
-                    self.board[square] = Piece(self.WHITE, 'p')
-                case 'e2':
-                    self.board[square] = Piece(self.WHITE, 'p')
-                case 'f2':
-                    self.board[square] = Piece(self.WHITE, 'p')
-                case 'g2':
-                    self.board[square] = Piece(self.WHITE, 'p')
-                case 'h2':
-                    self.board[square] = Piece(self.WHITE, 'p')
-                case 'a7':
-                    self.board[square] = Piece(self.BLACK, 'p')
-                case 'b7':
-                    self.board[square] = Piece(self.BLACK, 'p')
-                case 'c7':
-                    self.board[square] = Piece(self.BLACK, 'p')
-                case 'd7':
-                    self.board[square] = Piece(self.BLACK, 'p')
-                case 'e7':
-                    self.board[square] = Piece(self.BLACK, 'p')
-                case 'f7':
-                    self.board[square] = Piece(self.BLACK, 'p')
-                case 'g7':
-                    self.board[square] = Piece(self.BLACK, 'p')
-                case 'h7':
-                    self.board[square] = Piece(self.BLACK, 'p')
-                case 'a8':
-                    self.board[square] = Piece(self.BLACK, 'r')
-                case 'b8':
-                    self.board[square] = Piece(self.BLACK, 'n')
-                case 'c8':
-                    self.board[square] = Piece(self.BLACK, 'b')
-                case 'd8':
-                    self.board[square] = Piece(self.BLACK, 'q')
-                case 'e8':
-                    self.board[square] = Piece(self.BLACK, 'k')
-                case 'f8':
-                    self.board[square] = Piece(self.BLACK, 'b')
-                case 'g8':
-                    self.board[square] = Piece(self.BLACK, 'n')
-                case 'h8':
-                    self.board[square] = Piece(self.BLACK, 'r')
-                case _:
-                    self.board[square] = None
+            if square in pieces:
+                self.board[square] = Piece(*pieces[square])
+            else:
+                self.board[square] = None
 
         self.white_king_square = 'e1'
         self.black_king_square = 'e8'

@@ -18,7 +18,10 @@ class Game:
         manual_setup = False
 
         while True:
-            line = input().split()
+            try:
+                line = input().split()
+            except EOFError:
+                break
             match line + [game_is_running]:
                 case ['fen', False]:
                     manual_setup = True
@@ -132,4 +135,4 @@ class Game:
     def print_score(self):
         print('Final score:')
         print(f'White: {self.white_score}')
-        print(f'Black: {self.black_player}')
+        print(f'Black: {self.black_score}')
