@@ -503,6 +503,7 @@ class Board:
         
         print(''.join([up_right, hor, 'a'] + [hor, up, hor] + ['b'] + [hor, up, hor] + ['c'] + [hor, up, hor] + ['d'] + [hor, up, hor] + ['e'] + [hor, up, hor] + ['f'] + [hor, up, hor] + ['g'] + [hor, up, hor] + ['h', hor, up_left]))
     
+    # TODO: memoization decorator
     def perft(self, depth, white_turn, moves):
         if depth == 0:
             return 1

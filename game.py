@@ -1,5 +1,6 @@
 from board import Board
 from move import Move
+import sys
 
 class Game:
     board: Board
@@ -60,8 +61,10 @@ class Game:
 
                         if turn not in 'wb':
                             continue
-
-                        print(f'The number of positions after {depth}', 'move' if depth == 1 else 'moves', 'is', self.board.perft(depth, turn == 'w', []))
+                        
+                        ret = self.board.perft(depth, turn == 'w', ())
+                        print(f'The number of positions after {depth}', 'move' if depth == 1 else 'moves', 'is', ret)
+                        print(ret, file=sys.stderr)
                 case ['move', *middle, True]:
                     start, end = middle[0], middle[1]
                     if len(middle) == 2:
