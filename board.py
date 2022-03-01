@@ -503,20 +503,26 @@ class Board:
         
         print(''.join([up_right, hor, 'a'] + [hor, up, hor] + ['b'] + [hor, up, hor] + ['c'] + [hor, up, hor] + ['d'] + [hor, up, hor] + ['e'] + [hor, up, hor] + ['f'] + [hor, up, hor] + ['g'] + [hor, up, hor] + ['h', hor, up_left]))
     
-    # TODO: memoization decorator
-    def perft(self, depth, white_turn, moves):
+    cache = {}
+    def perft(self, depth, white_turn):
         if depth == 0:
             return 1
         
-        all_moves = []
-        for square in self.squares:
-            if self.board[square] and self.board[square].is_white == white_turn:
-                all_moves.append(self.board[square].generate_legal_moves(square, self))
-        
-        num_positions = 0
-        for move in chain(*all_moves):
-            # print(f'{self.to_fen()}    {move}    {moves}')
-            self.make_move(move)
-            num_positions += self.perft(depth - 1, not white_turn, moves + [move])
-            self.undo_move(move)
-        return num_positions
+        key = (self.to_fen(), depth, white_turn)
+        if key not in self.cache:
+            all_moves = []
+            for square in self.squares:
+                if self.board[square] and self.board[square].is_white == white_turn:
+                    all_moves.append(self.board[square].generate_legal_moves(square, self))
+            
+            num_positions = 0
+            if depth == 1:
+                num_positions = sum(1 for _ in chain(*all_moves))
+            else:
+                for move in chain(*all_moves):
+                    # print(f'{self.to_fen()}    {move}    {moves}')
+                    self.make_move(move)
+                    num_positions += self.perft(depth - 1, not white_turn)
+                    self.undo_move(move)
+            self.cache[key] = num_positions
+        return self.cache[key]

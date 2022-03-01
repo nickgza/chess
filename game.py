@@ -62,7 +62,7 @@ class Game:
                         if turn not in 'wb':
                             continue
                         
-                        ret = self.board.perft(depth, turn == 'w', ())
+                        ret = self.board.perft(depth, turn == 'w')
                         print(f'The number of positions after {depth}', 'move' if depth == 1 else 'moves', 'is', ret)
                         print(ret, file=sys.stderr)
                 case ['move', *middle, True]:
