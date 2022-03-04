@@ -3,23 +3,20 @@ import sys
 import io
 import os
 import main
+import contextlib
 
 class TestMain(unittest.TestCase):
     def perft(self, file):
         with open(f'tests/{file}.in') as perftin:
             sys.stdin = perftin
-            with open(os.devnull, 'w', encoding='utf-8') as null:
-                sys.stdout = null
-                out = io.StringIO()
-                sys.stderr = out
+            with open(os.devnull, 'w', encoding='utf8') as null:
+                with contextlib.redirect_stdout(null):
+                    with contextlib.redirect_stderr(io.StringIO()) as out:
+                        main.main_text()
 
-                main.main()
-
-                sys.stdin = sys.__stdin__
-                sys.stdout = sys.__stdout__
-                sys.stderr = sys.__stderr__
-                with open(f'tests/{file}.out') as perftout:
-                    self.assertEqual(out.getvalue(), perftout.read())
+        sys.stdin = sys.__stdin__
+        with open(f'tests/{file}.out') as perftout:
+            self.assertEqual(out.getvalue(), perftout.read())
 
     def test_perft1(self):
         self.perft('perft1')
