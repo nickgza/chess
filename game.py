@@ -139,3 +139,22 @@ class Game:
         print('Final score:')
         print(f'White: {self.white_score}')
         print(f'Black: {self.black_score}')
+
+    def move_input(self, start, end):
+        if start == end:
+            return
+            
+        move = Move(start, end)
+        
+        if not self.board.board[start]:
+            print('There is no piece on', start)
+            return
+        if self.board.board[start].is_white != self.board.white_turn:
+            print('You cannot move this piece')
+            return
+        
+        if not self.board.board[start].is_legal(move, self.board):
+            print('Illegal move')
+            return
+        
+        self.board.make_move(move)

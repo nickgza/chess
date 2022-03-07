@@ -8,33 +8,19 @@ def main_text():
 def main():
     import pygame as pg
 
-    # setup()
-    WIDTH, HEIGHT = 520, 520
-    WIN = pg.display.set_mode((WIDTH, HEIGHT), pg.RESIZABLE)
-    pg.display.set_caption('Chess')
-    FPS = 30
-
-    colours = {
-        'BLACK': (0, 0, 0),
-        'LIGHT': (240, 217, 181),
-        'DARK': (181, 136, 99),
-    }
-
     def calculate_top_left(width, height):
         if width > height:
             return ((width - height) // 2, 0)
         else:
             return (0, (height - width) // 2)
 
-    def draw():
-        WIN.fill(colours['BLACK'])
-
+    def def_squares():
         size = pg.display.get_surface().get_size()
         dim = min(size)
         square_dim = round(dim / 8)
         top_left_x, top_left_y = calculate_top_left(*size)
 
-        squares = {
+        return {
             'a8': pg.Rect(top_left_x,                  top_left_y,                  square_dim, square_dim),
             'b8': pg.Rect(top_left_x + square_dim,     top_left_y,                  square_dim, square_dim),
             'c8': pg.Rect(top_left_x + 2 * square_dim, top_left_y,                  square_dim, square_dim),
@@ -101,26 +87,99 @@ def main():
             'h1': pg.Rect(top_left_x + 7 * square_dim, top_left_y + 7 * square_dim, square_dim, square_dim),
         }
 
+    def draw_squares(squares):
         for key, val in squares.items():
             pg.draw.rect(WIN, colours['DARK' if (ord(key[0]) + ord(key[1])) % 2 == 0 else 'LIGHT'], val)
 
-        # images = {
-        #     'WHITEKING': pg.transform.scale(pg.image.load('assets/white_king.png').convert_alpha(), (square_dim, square_dim))
-        # }
+    def def_images():
+        size = pg.display.get_surface().get_size()
+        dim = min(size)
+        square_dim = round(dim / 8)
+        return {
+            'K': pg.transform.smoothscale(pg.image.load('assets/wk.png'), (square_dim, square_dim)),
+            'Q': pg.transform.smoothscale(pg.image.load('assets/wq.png'), (square_dim, square_dim)),
+            'R': pg.transform.smoothscale(pg.image.load('assets/wr.png'), (square_dim, square_dim)),
+            'B': pg.transform.smoothscale(pg.image.load('assets/wb.png'), (square_dim, square_dim)),
+            'N': pg.transform.smoothscale(pg.image.load('assets/wn.png'), (square_dim, square_dim)),
+            'P': pg.transform.smoothscale(pg.image.load('assets/wp.png'), (square_dim, square_dim)),
+            'k': pg.transform.smoothscale(pg.image.load('assets/bk.png'), (square_dim, square_dim)),
+            'q': pg.transform.smoothscale(pg.image.load('assets/bq.png'), (square_dim, square_dim)),
+            'r': pg.transform.smoothscale(pg.image.load('assets/br.png'), (square_dim, square_dim)),
+            'b': pg.transform.smoothscale(pg.image.load('assets/bb.png'), (square_dim, square_dim)),
+            'n': pg.transform.smoothscale(pg.image.load('assets/bn.png'), (square_dim, square_dim)),
+            'p': pg.transform.smoothscale(pg.image.load('assets/bp.png'), (square_dim, square_dim)),
+        }
 
-        # WIN.blit(images['WHITEKING'], squares['e1'])
-        pg.display.update()
+    def draw_pieces(squares, images, board):
+        for square in squares:
+            if board.board[square]:
+                tp = board.board[square].piece_type
+                WIN.blit(images[tp.upper() if board.board[square].is_white else tp], squares[square])
+
+    WIDTH, HEIGHT = 520, 520
+    WIN = pg.display.set_mode((WIDTH, HEIGHT), pg.RESIZABLE)
+    pg.display.set_caption('Chess')
+    FPS = 30
+
+    colours = {
+        'BLACK': (0, 0, 0),
+        'LIGHT': (240, 217, 181),
+        'DARK': (181, 136, 99),
+    }
+
+    game = Game()
+    game.board.init()
 
     run = True
     clock = pg.time.Clock()
+    square_selected = None
     while run:
         clock.tick(FPS)
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                run = False
-        
-        draw()
 
+        WIN.fill(colours['BLACK'])
+
+        squares = def_squares()
+        draw_squares(squares)
+        images = def_images()
+        draw_pieces(squares, images, game.board)
+
+        for event in pg.event.get():
+            match event.type:
+                case pg.QUIT:
+                    run = False
+                case pg.MOUSEBUTTONDOWN:
+                    square_clicked = None
+                    pos = pg.mouse.get_pos()
+                    for square, rect in squares.items():
+                        if rect.collidepoint(pos):
+                            square_clicked = square
+                            break
+                    
+                    if square_clicked is None:
+                        continue
+
+                    if square_selected is None:
+                        square_selected = square_clicked
+                    else:
+                        game.move_input(square_selected, square_clicked)
+                        square_selected = None
+                    
+                case pg.MOUSEBUTTONUP:
+                    square_clicked = None
+                    pos = pg.mouse.get_pos()
+                    for square, rect in squares.items():
+                        if rect.collidepoint(pos):
+                            square_clicked = square
+                            break
+                    
+                    if square_clicked is None or square_clicked == square_selected:
+                        continue
+
+                    if square_selected is not None:
+                        game.move_input(square_selected, square_clicked)
+                        square_selected = None
+
+        pg.display.flip()
     pg.quit()
 
 
