@@ -142,19 +142,55 @@ class Game:
 
     def move_input(self, start, end):
         if start == end:
-            return
+            return None
             
         move = Move(start, end)
         
-        if not self.board.board[start]:
-            print('There is no piece on', start)
-            return
-        if self.board.board[start].is_white != self.board.white_turn:
-            print('You cannot move this piece')
-            return
-        
         if not self.board.board[start].is_legal(move, self.board):
             print('Illegal move')
-            return
+            return None
         
         self.board.make_move(move)
+        return move
+    
+    def valid_piece(self, start):
+        if not self.board.board[start]:
+            print('There is no piece on', start)
+            return False
+        if self.board.board[start].is_white != self.board.white_turn:
+            print('You cannot move this piece')
+            return False
+        return True
+    
+    def checks(self):
+        if self.board.white_turn:
+            white_mates = self.board.checkmate_stalemate_checked(self.board.WHITE)
+            if white_mates[0]:
+                print('Checkmate! Black wins!')
+                self.black_score += 1
+                return True
+            elif white_mates[1]:
+                print('Stalemate!')
+                self.white_score += 0.5
+                self.black_score += 0.5
+                return True
+            elif white_mates[2]:
+                pass
+        else:
+            black_mates = self.board.checkmate_stalemate_checked(self.board.BLACK)
+            if black_mates[0]:
+                print('Checkmate! White wins!')
+                self.white_score += 1
+                return True
+            elif black_mates[1]:
+                print('Stalemate!')
+                self.white_score += 0.5
+                self.black_score += 0.5
+                return True
+            elif black_mates[2]:
+                pass
+        if self.board.insufficient_material():
+            print('Draw by insufficient material!')
+            self.white_score += 0.5
+            self.black_score += 0.5
+            return True

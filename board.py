@@ -403,8 +403,9 @@ class Board:
                 legal_moves = piece.generate_legal_moves(square, self)
                 try:
                     next(legal_moves)
-                except StopIteration:
                     return False
+                except StopIteration:
+                    pass
         return True
 
     def checkmate_stalemate_checked(self, attacked_colour: bool) -> tuple:

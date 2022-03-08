@@ -1,4 +1,5 @@
 from game import Game
+import time
 
 def main_text():
     game = Game()
@@ -90,6 +91,15 @@ def main():
     def draw_squares(squares):
         for key, val in squares.items():
             pg.draw.rect(WIN, colours['DARK' if (ord(key[0]) + ord(key[1])) % 2 == 0 else 'LIGHT'], val)
+    
+    def highlight_last_move(squares, move):
+        if move is not None:
+            pg.draw.rect(WIN, colours['DARK_HIGHLIGHT' if (ord(move.start[0]) + ord(move.start[1])) % 2 == 0 else 'LIGHT_HIGHLIGHT'], squares[move.start])
+            pg.draw.rect(WIN, colours['DARK_HIGHLIGHT' if (ord(move.end[0]) + ord(move.end[1])) % 2 == 0 else 'LIGHT_HIGHLIGHT'], squares[move.end])
+    
+    def highlight_selected(squares, square):
+        if square is not None:
+            pg.draw.rect(WIN, colours['DARK_HIGHLIGHT' if (ord(square[0]) + ord(square[1])) % 2 == 0 else 'LIGHT_HIGHLIGHT'], squares[square])
 
     def def_images():
         size = pg.display.get_surface().get_size()
@@ -119,12 +129,14 @@ def main():
     WIDTH, HEIGHT = 520, 520
     WIN = pg.display.set_mode((WIDTH, HEIGHT), pg.RESIZABLE)
     pg.display.set_caption('Chess')
-    FPS = 30
+    FPS = 60
 
     colours = {
         'BLACK': (0, 0, 0),
         'LIGHT': (240, 217, 181),
         'DARK': (181, 136, 99),
+        'LIGHT_HIGHLIGHT': (240, 240, 105),
+        'DARK_HIGHLIGHT': (181, 162, 58),
     }
 
     game = Game()
@@ -133,15 +145,9 @@ def main():
     run = True
     clock = pg.time.Clock()
     square_selected = None
+    last_move = None
     while run:
         clock.tick(FPS)
-
-        WIN.fill(colours['BLACK'])
-
-        squares = def_squares()
-        draw_squares(squares)
-        images = def_images()
-        draw_pieces(squares, images, game.board)
 
         for event in pg.event.get():
             match event.type:
@@ -159,10 +165,17 @@ def main():
                         continue
 
                     if square_selected is None:
+                        if game.valid_piece(square_clicked):
+                            square_selected = square_clicked
+                    elif square_selected == square_clicked:
+                        continue
+                    elif game.board.board[square_clicked] is not None and game.board.board[square_clicked].is_white == game.board.white_turn:
                         square_selected = square_clicked
                     else:
-                        game.move_input(square_selected, square_clicked)
+                        move = game.move_input(square_selected, square_clicked)
                         square_selected = None
+                        if move is not None:
+                            last_move = move
                     
                 case pg.MOUSEBUTTONUP:
                     square_clicked = None
@@ -176,14 +189,31 @@ def main():
                         continue
 
                     if square_selected is not None:
-                        game.move_input(square_selected, square_clicked)
-                        square_selected = None
+                        move = game.move_input(square_selected, square_clicked)
+                        if move is not None:
+                            square_selected = None
+                            last_move = move
+        
+        WIN.fill(colours['BLACK'])
+
+        squares = def_squares()
+        draw_squares(squares)
+        highlight_last_move(squares, last_move)
+        highlight_selected(squares, square_selected)
+        # TODO: highlight available moves
+        images = def_images()
+        draw_pieces(squares, images, game.board)
 
         pg.display.flip()
+        game_over = game.checks()
+        if game_over:
+            time.sleep(1)
+            break
+    
+    game.print_score()
     pg.quit()
 
 
 if __name__ == '__main__':
     # main_text()
     main()
-
