@@ -341,7 +341,7 @@ class Board:
         
         self.white_turn = not self.white_turn
 
-    def square_is_attacked(self, target, attacking_colour):
+    def square_is_attacked(self, target: Move, attacking_colour: bool) -> bool:
         def attacked_by_line(d_file, d_rank):
             file = chr(ord(target[0]) + d_file)
             rank = chr(ord(target[1]) + d_rank)
@@ -396,7 +396,7 @@ class Board:
                             return True
         return False
 
-    def no_legal_moves(self, is_white):
+    def no_legal_moves(self, is_white: bool) -> bool:
         for square in self.squares:
             piece = self.board[square]
             if piece and piece.is_white == is_white:
@@ -465,7 +465,7 @@ class Board:
                 return ((ord(white_bishop_square[0]) + ord(white_bishop_square[1])) % 2 ==
                         (ord(black_bishop_square[0]) + ord(black_bishop_square[1])) % 2)
 
-    def display(self):
+    def display(self) -> None:
         hor = '\u2500'
         ver = '\u2502'
         four = '\u253c'
@@ -505,7 +505,7 @@ class Board:
         print(''.join([up_right, hor, 'a'] + [hor, up, hor] + ['b'] + [hor, up, hor] + ['c'] + [hor, up, hor] + ['d'] + [hor, up, hor] + ['e'] + [hor, up, hor] + ['f'] + [hor, up, hor] + ['g'] + [hor, up, hor] + ['h', hor, up_left]))
     
     cache = {}
-    def perft(self, depth, white_turn):
+    def perft(self, depth: int, white_turn: bool) -> int:
         if depth == 0:
             return 1
         

@@ -8,6 +8,7 @@ def main_text():
 
 def main():
     import pygame as pg
+    import pygame.gfxdraw
 
     def calculate_top_left(width, height):
         if width > height:
@@ -125,9 +126,21 @@ def main():
             if board.board[square]:
                 tp = board.board[square].piece_type
                 WIN.blit(images[tp.upper() if board.board[square].is_white else tp], squares[square])
+    
+    def highlight_available(squares, square_selected, board):
+        if square_selected is None:
+            return
+        for move in board.board[square_selected].generate_legal_moves(square_selected, board):
+            rect = squares[move.end]
+            if board.board[move.end] is None:
+                pg.draw.circle(WIN2, (0, 0, 0, 60), rect.center, rect.w / 6)
+                # pg.gfxdraw.filled_circle(WIN2, rect.centerx, rect.centery, int(rect.w / 6), (0, 0, 0, 60))
+            else:
+                pg.draw.circle(WIN2, (0, 0, 0, 60), rect.center, rect.w / 2 * 0.96, int(rect.w / 13))
 
     WIDTH, HEIGHT = 520, 520
-    WIN = pg.display.set_mode((WIDTH, HEIGHT), pg.RESIZABLE)
+    WIN = pg.display.set_mode((WIDTH, HEIGHT), pg.HWSURFACE | pg.DOUBLEBUF | pg.RESIZABLE)
+    WIN2 = pg.surface.Surface((WIDTH, HEIGHT), pg.SRCALPHA | pg.RESIZABLE)
     pg.display.set_caption('Chess')
     FPS = 60
 
@@ -168,7 +181,7 @@ def main():
                         if game.valid_piece(square_clicked):
                             square_selected = square_clicked
                     elif square_selected == square_clicked:
-                        continue
+                        square_selected = None
                     elif game.board.board[square_clicked] is not None and game.board.board[square_clicked].is_white == game.board.white_turn:
                         square_selected = square_clicked
                     else:
@@ -200,10 +213,13 @@ def main():
         draw_squares(squares)
         highlight_last_move(squares, last_move)
         highlight_selected(squares, square_selected)
-        # TODO: highlight available moves
         images = def_images()
         draw_pieces(squares, images, game.board)
+        WIN2 = pg.transform.scale(WIN2, pg.display.get_surface().get_size())
+        WIN2.fill((0, 0, 0, 0))
+        highlight_available(squares, square_selected, game.board)
 
+        WIN.blit(WIN2, (0, 0))
         pg.display.flip()
         game_over = game.checks()
         if game_over:

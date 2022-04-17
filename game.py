@@ -1,3 +1,4 @@
+from xmlrpc.client import Boolean
 from board import Board
 from move import Move
 import sys
@@ -135,12 +136,12 @@ class Game:
                     game_is_running = False
                     manual_setup = False
 
-    def print_score(self):
+    def print_score(self) -> None:
         print('Final score:')
         print(f'White: {self.white_score}')
         print(f'Black: {self.black_score}')
 
-    def move_input(self, start, end):
+    def move_input(self, start: Move, end: Move) -> Move:
         if start == end:
             return None
             
@@ -153,7 +154,7 @@ class Game:
         self.board.make_move(move)
         return move
     
-    def valid_piece(self, start):
+    def valid_piece(self, start: Move) -> bool:
         if not self.board.board[start]:
             print('There is no piece on', start)
             return False
@@ -162,7 +163,7 @@ class Game:
             return False
         return True
     
-    def checks(self):
+    def checks(self) -> bool:
         if self.board.white_turn:
             white_mates = self.board.checkmate_stalemate_checked(self.board.WHITE)
             if white_mates[0]:
