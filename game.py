@@ -147,6 +147,12 @@ class Game:
             
         move = Move(start, end)
         
+        if self.board.board[start].piece_type == 'p':
+            if self.board.board[start].is_white and end[1] == '8':
+                move.promote_to = 'q'
+            elif not self.board.board[start].is_white and end[1] == '1':
+                move.promote_to = 'q'
+        
         if not self.board.board[start].is_legal(move, self.board):
             print('Illegal move')
             return None

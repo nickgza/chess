@@ -8,7 +8,7 @@ def main_text():
 
 def main():
     import pygame as pg
-    import pygame.gfxdraw
+    # import pygame.gfxdraw
 
     def calculate_top_left(width, height):
         if width > height:
@@ -149,7 +149,7 @@ def main():
         'LIGHT': (240, 217, 181),
         'DARK': (181, 136, 99),
         'LIGHT_HIGHLIGHT': (240, 240, 105),
-        'DARK_HIGHLIGHT': (181, 162, 58),
+        'DARK_HIGHLIGHT': (200, 183, 20),
     }
 
     game = Game()
