@@ -1,4 +1,5 @@
 from game import Game
+from move import Move
 import time
 
 def main_text():
@@ -8,7 +9,6 @@ def main_text():
 
 def main():
     import pygame as pg
-    # import pygame.gfxdraw
 
     def calculate_top_left(width, height):
         if width > height:
@@ -107,18 +107,18 @@ def main():
         dim = min(size)
         square_dim = round(dim / 8)
         return {
-            'K': pg.transform.smoothscale(pg.image.load('assets/wk.png'), (square_dim, square_dim)),
-            'Q': pg.transform.smoothscale(pg.image.load('assets/wq.png'), (square_dim, square_dim)),
-            'R': pg.transform.smoothscale(pg.image.load('assets/wr.png'), (square_dim, square_dim)),
-            'B': pg.transform.smoothscale(pg.image.load('assets/wb.png'), (square_dim, square_dim)),
-            'N': pg.transform.smoothscale(pg.image.load('assets/wn.png'), (square_dim, square_dim)),
-            'P': pg.transform.smoothscale(pg.image.load('assets/wp.png'), (square_dim, square_dim)),
-            'k': pg.transform.smoothscale(pg.image.load('assets/bk.png'), (square_dim, square_dim)),
-            'q': pg.transform.smoothscale(pg.image.load('assets/bq.png'), (square_dim, square_dim)),
-            'r': pg.transform.smoothscale(pg.image.load('assets/br.png'), (square_dim, square_dim)),
-            'b': pg.transform.smoothscale(pg.image.load('assets/bb.png'), (square_dim, square_dim)),
-            'n': pg.transform.smoothscale(pg.image.load('assets/bn.png'), (square_dim, square_dim)),
-            'p': pg.transform.smoothscale(pg.image.load('assets/bp.png'), (square_dim, square_dim)),
+            'K': pg.transform.smoothscale(orig_images['K'], (square_dim, square_dim)),
+            'Q': pg.transform.smoothscale(orig_images['Q'], (square_dim, square_dim)),
+            'R': pg.transform.smoothscale(orig_images['R'], (square_dim, square_dim)),
+            'B': pg.transform.smoothscale(orig_images['B'], (square_dim, square_dim)),
+            'N': pg.transform.smoothscale(orig_images['N'], (square_dim, square_dim)),
+            'P': pg.transform.smoothscale(orig_images['P'], (square_dim, square_dim)),
+            'k': pg.transform.smoothscale(orig_images['k'], (square_dim, square_dim)),
+            'q': pg.transform.smoothscale(orig_images['q'], (square_dim, square_dim)),
+            'r': pg.transform.smoothscale(orig_images['r'], (square_dim, square_dim)),
+            'b': pg.transform.smoothscale(orig_images['b'], (square_dim, square_dim)),
+            'n': pg.transform.smoothscale(orig_images['n'], (square_dim, square_dim)),
+            'p': pg.transform.smoothscale(orig_images['p'], (square_dim, square_dim)),
         }
 
     def draw_pieces(squares, images, board):
@@ -127,16 +127,50 @@ def main():
                 tp = board.board[square].piece_type
                 WIN.blit(images[tp.upper() if board.board[square].is_white else tp], squares[square])
     
-    def highlight_available(squares, square_selected, board):
+    def highlight_available(squares, square_selected: str, board):
         if square_selected is None:
             return
         for move in board.board[square_selected].generate_legal_moves(square_selected, board):
             rect = squares[move.end]
             if board.board[move.end] is None:
-                pg.draw.circle(WIN2, (0, 0, 0, 60), rect.center, rect.w / 6)
-                # pg.gfxdraw.filled_circle(WIN2, rect.centerx, rect.centery, int(rect.w / 6), (0, 0, 0, 60))
+                pg.draw.circle(WIN2, (0, 0, 0, 60), tuple(map(lambda x: x*WIN2_FACTOR, rect.center)), rect.w / 6 * WIN2_FACTOR)
             else:
-                pg.draw.circle(WIN2, (0, 0, 0, 60), rect.center, rect.w / 2 * 0.96, int(rect.w / 13))
+                pg.draw.circle(WIN2, (0, 0, 0, 60), tuple(map(lambda x: x*WIN2_FACTOR, rect.center)), rect.w / 2 * 0.96 * WIN2_FACTOR, int(rect.w / 13 * WIN2_FACTOR))
+    
+    def highlight_promotion(squares, promoting: str):
+        file = promoting[0]
+        if promoting[1] == '8':
+            for rank, piece in zip('8765', 'QNRB'):
+                pg.draw.rect(WIN, colours['WHITE'], squares[file + rank])
+                WIN.blit(images[piece], squares[file + rank])
+        elif promoting[1] == '1':
+            for rank, piece in zip('1234', 'qnrb'):
+                pg.draw.rect(WIN, colours['WHITE'], squares[file + rank])
+                WIN.blit(images[piece], squares[file + rank])
+    
+    def calculate_promote_to(promoting: str, square_clicked: str) -> str:
+        if promoting[0] == square_clicked[0]:
+            if promoting[1] == '8':
+                match square_clicked[1]:
+                    case '8':
+                        return 'q'
+                    case '7':
+                        return 'n'
+                    case '6':
+                        return 'r'
+                    case '5':
+                        return 'b'
+            elif promoting[1] == '1':
+                match square_clicked[1]:
+                    case '1':
+                        return 'q'
+                    case '2':
+                        return 'n'
+                    case '3':
+                        return 'r'
+                    case '4':
+                        return 'b'
+        return ' '
 
     WIDTH, HEIGHT = 520, 520
     WIN = pg.display.set_mode((WIDTH, HEIGHT), pg.HWSURFACE | pg.DOUBLEBUF | pg.RESIZABLE)
@@ -146,10 +180,26 @@ def main():
 
     colours = {
         'BLACK': (0, 0, 0),
+        'WHITE': (255, 255, 255),
         'LIGHT': (240, 217, 181),
         'DARK': (181, 136, 99),
         'LIGHT_HIGHLIGHT': (240, 240, 105),
         'DARK_HIGHLIGHT': (200, 183, 20),
+    }
+
+    orig_images = {
+        'K': pg.image.load('assets/wk.png'),
+        'Q': pg.image.load('assets/wq.png'),
+        'R': pg.image.load('assets/wr.png'),
+        'B': pg.image.load('assets/wb.png'),
+        'N': pg.image.load('assets/wn.png'),
+        'P': pg.image.load('assets/wp.png'),
+        'k': pg.image.load('assets/bk.png'),
+        'q': pg.image.load('assets/bq.png'),
+        'r': pg.image.load('assets/br.png'),
+        'b': pg.image.load('assets/bb.png'),
+        'n': pg.image.load('assets/bn.png'),
+        'p': pg.image.load('assets/bp.png'),
     }
 
     game = Game()
@@ -158,7 +208,10 @@ def main():
     run = True
     clock = pg.time.Clock()
     square_selected = None
+    pending_deselect = None
     last_move = None
+    promoting = None
+
     while run:
         clock.tick(FPS)
 
@@ -176,16 +229,29 @@ def main():
                     
                     if square_clicked is None:
                         continue
-
-                    if square_selected is None:
+                    
+                    if promoting is not None:
+                        promote_to = calculate_promote_to(promoting, square_clicked)
+                        if promote_to == ' ':
+                            pass
+                        else:
+                            move = Move(square_selected, promoting, promote_to)
+                            game.board.make_move(move)
+                            last_move = move
+                        square_selected = None
+                        promoting = None
+                    elif square_selected is None:
                         if game.valid_piece(square_clicked):
                             square_selected = square_clicked
                     elif square_selected == square_clicked:
-                        square_selected = None
+                        pending_deselect = square_selected
                     elif game.board.board[square_clicked] is not None and game.board.board[square_clicked].is_white == game.board.white_turn:
                         square_selected = square_clicked
                     else:
                         move = game.move_input(square_selected, square_clicked)
+                        if isinstance(move, str):
+                            promoting = move
+                            continue
                         square_selected = None
                         if move is not None:
                             last_move = move
@@ -198,11 +264,19 @@ def main():
                             square_clicked = square
                             break
                     
+                    if pending_deselect is not None and square_clicked == pending_deselect:
+                        square_selected = None
+                        pending_deselect = None
+                        continue
+                    
                     if square_clicked is None or square_clicked == square_selected:
                         continue
-
+                    
                     if square_selected is not None:
                         move = game.move_input(square_selected, square_clicked)
+                        if isinstance(move, str):
+                            promoting = move
+                            continue
                         if move is not None:
                             square_selected = None
                             last_move = move
@@ -215,10 +289,15 @@ def main():
         highlight_selected(squares, square_selected)
         images = def_images()
         draw_pieces(squares, images, game.board)
-        WIN2 = pg.transform.scale(WIN2, pg.display.get_surface().get_size())
+        WIN2_FACTOR = 3
+        WIN2 = pg.transform.scale(WIN2, tuple(map(lambda x: x*WIN2_FACTOR, pg.display.get_surface().get_size())))
         WIN2.fill((0, 0, 0, 0))
-        highlight_available(squares, square_selected, game.board)
+        if promoting is None:
+            highlight_available(squares, square_selected, game.board)
+        else:
+            highlight_promotion(squares, promoting)
 
+        WIN2 = pg.transform.smoothscale(WIN2, tuple(map(lambda x: x/WIN2_FACTOR, WIN2.get_size())))
         WIN.blit(WIN2, (0, 0))
         pg.display.flip()
         game_over = game.checks()

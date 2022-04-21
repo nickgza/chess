@@ -1,4 +1,3 @@
-from xmlrpc.client import Boolean
 from board import Board
 from move import Move
 import sys
@@ -141,21 +140,21 @@ class Game:
         print(f'White: {self.white_score}')
         print(f'Black: {self.black_score}')
 
-    def move_input(self, start: Move, end: Move) -> Move:
+    def move_input(self, start: Move, end: Move) -> Move | str:
         if start == end:
             return None
             
         move = Move(start, end)
         
-        if self.board.board[start].piece_type == 'p':
-            if self.board.board[start].is_white and end[1] == '8':
-                move.promote_to = 'q'
-            elif not self.board.board[start].is_white and end[1] == '1':
-                move.promote_to = 'q'
-        
         if not self.board.board[start].is_legal(move, self.board):
             print('Illegal move')
             return None
+        
+        if self.board.board[start].piece_type == 'p':
+            if self.board.board[start].is_white and end[1] == '8':
+                return end
+            elif not self.board.board[start].is_white and end[1] == '1':
+                return end
         
         self.board.make_move(move)
         return move
