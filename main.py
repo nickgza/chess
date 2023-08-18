@@ -95,6 +95,17 @@ def main():
         for key, val in squares.items():
             pg.draw.rect(WIN, colours['DARK' if (ord(key[0]) + ord(key[1])) % 2 == 0 else 'LIGHT'], val)
     
+    def highlight_dragged_to(squares):
+        size = pg.display.get_surface().get_size()
+        dim = min(size)
+        width = round(dim / 192)
+
+        pos = pg.mouse.get_pos()
+        for square, rect in squares.items():
+            if rect.collidepoint(pos):
+                pg.draw.rect(WIN, colours['DARK_BORDER' if (ord(square[0]) + ord(square[1])) % 2 == 0 else 'LIGHT_BORDER'], squares[square], width)
+                return
+    
     def highlight_last_move(squares, move):
         if move is not None:
             pg.draw.rect(WIN, colours['DARK_HIGHLIGHT' if (ord(move.start[0]) + ord(move.start[1])) % 2 == 0 else 'LIGHT_HIGHLIGHT'], squares[move.start])
@@ -200,6 +211,8 @@ def main():
         'DARK': (181, 136, 99),
         'LIGHT_HIGHLIGHT': (240, 240, 105),
         'DARK_HIGHLIGHT': (220, 200, 22),
+        'LIGHT_BORDER': (240, 240, 240),
+        'DARK_BORDER': (225, 225, 225),
     }
 
     orig_images = {
@@ -222,8 +235,8 @@ def main():
 
     run = True
     clock = pg.time.Clock()
-    square_selected = None
-    pending_deselect = None
+    square_selected: None | str = None
+    pending_deselect: None | str = None
     last_move = None
     promoting: None | Move = None
     mouse_down = False
@@ -241,6 +254,14 @@ def main():
                 case pg.VIDEORESIZE:
                     resized = True
                 case pg.MOUSEBUTTONDOWN:
+                    # Right click
+                    if event.button == 3:
+                        square_selected = None
+                        pending_deselect = None
+                        promoting = None
+                        mouse_down = None
+                        redraw_highlights = True
+                        continue
                     mouse_down = True
                     square_clicked = None
                     pos = pg.mouse.get_pos()
@@ -317,6 +338,8 @@ def main():
         draw_squares(squares)
         highlight_last_move(squares, last_move)
         highlight_selected(squares, square_selected)
+        if mouse_down and square_selected is not None and promoting is None:
+            highlight_dragged_to(squares)
         WIN2_FACTOR = 3
         if first_frame or redraw_highlights or resized:
             WIN2 = pg.transform.scale(WIN2, tuple(map(lambda x: x*WIN2_FACTOR, pg.display.get_surface().get_size())))
