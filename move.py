@@ -35,3 +35,6 @@ class Move:
 
     def __repr__(self):
         return str(self)
+    
+    def promoting(self):
+        return self.promote_to != ' '

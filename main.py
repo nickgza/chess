@@ -1,6 +1,7 @@
 from game import Game
 from move import Move
 import time
+import os
 
 def main_text():
     game = Game()
@@ -8,6 +9,7 @@ def main_text():
     game.print_score()
 
 def main():
+    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = ''
     import pygame as pg
 
     def calculate_top_left(width, height):
@@ -121,22 +123,24 @@ def main():
             'p': pg.transform.smoothscale(orig_images['p'], (square_dim, square_dim)),
         }
 
-    def draw_pieces(squares, images, board, dragged):
+    def draw_pieces(squares, images, board, dragged, promoting):
         size = pg.display.get_surface().get_size()
         dim = min(size)
         half_square_dim = round(dim / 16)
         for square in squares:
+            if promoting is not None and square == promoting.start:
+                continue
             if board.board[square]:
                 tp = board.board[square].piece_type
                 if square != dragged:
                     WIN3.blit(images[tp.upper() if board.board[square].is_white else tp], squares[square])
         if dragged is not None and board.board[dragged]:
+            if promoting is not None and dragged == promoting.start:
+                return
             tp = board.board[dragged].piece_type
             WIN3.blit(images[tp.upper() if board.board[dragged].is_white else tp], tuple(map(lambda x: x - half_square_dim, pg.mouse.get_pos())))
     
     def highlight_available(squares, square_selected: str, board):
-        if square_selected is None:
-            return
         for move in board.board[square_selected].generate_legal_moves(square_selected, board):
             rect = squares[move.end]
             if board.board[move.end] is None:
@@ -144,16 +148,16 @@ def main():
             else:
                 pg.draw.circle(WIN2, (0, 0, 0, 60), tuple(map(lambda x: x*WIN2_FACTOR, rect.center)), rect.w / 2 * 0.96 * WIN2_FACTOR, int(rect.w / 13 * WIN2_FACTOR))
     
-    def highlight_promotion(squares, promoting: str):
+    def highlight_promotion(squares, promoting: Move):
         file = promoting[0]
         if promoting[1] == '8':
             for rank, piece in zip('8765', 'QNRB'):
-                pg.draw.rect(WIN, colours['WHITE'], squares[file + rank])
-                WIN.blit(images[piece], squares[file + rank])
+                pg.draw.rect(WIN3, colours['WHITE'], squares[file + rank])
+                WIN3.blit(images[piece], squares[file + rank])
         elif promoting[1] == '1':
             for rank, piece in zip('1234', 'qnrb'):
-                pg.draw.rect(WIN, colours['WHITE'], squares[file + rank])
-                WIN.blit(images[piece], squares[file + rank])
+                pg.draw.rect(WIN3, colours['WHITE'], squares[file + rank])
+                WIN3.blit(images[piece], squares[file + rank])
     
     def calculate_promote_to(promoting: str, square_clicked: str) -> str:
         if promoting[0] == square_clicked[0]:
@@ -195,7 +199,7 @@ def main():
         'LIGHT': (240, 217, 181),
         'DARK': (181, 136, 99),
         'LIGHT_HIGHLIGHT': (240, 240, 105),
-        'DARK_HIGHLIGHT': (200, 183, 20),
+        'DARK_HIGHLIGHT': (220, 200, 22),
     }
 
     orig_images = {
@@ -221,16 +225,21 @@ def main():
     square_selected = None
     pending_deselect = None
     last_move = None
-    promoting = None
+    promoting: None | Move = None
     mouse_down = False
+    first_frame: bool = True
 
     while run:
         clock.tick(FPS)
+        resized: bool = False
+        redraw_highlights: bool = False
 
         for event in pg.event.get():
             match event.type:
                 case pg.QUIT:
                     run = False
+                case pg.VIDEORESIZE:
+                    resized = True
                 case pg.MOUSEBUTTONDOWN:
                     mouse_down = True
                     square_clicked = None
@@ -244,31 +253,33 @@ def main():
                         continue
                     
                     if promoting is not None:
-                        promote_to = calculate_promote_to(promoting, square_clicked)
+                        promote_to = calculate_promote_to(promoting.end, square_clicked)
                         if promote_to == ' ':
                             pass
                         else:
-                            move = Move(square_selected, promoting, promote_to)
+                            move = Move(square_selected, promoting.end, promote_to)
                             game.board.make_move(move)
                             last_move = move
                         square_selected = None
+                        redraw_highlights = True
                         promoting = None
                     elif square_selected is None:
                         if game.valid_piece(square_clicked):
                             square_selected = square_clicked
+                            redraw_highlights = True
                     elif square_selected == square_clicked:
                         pending_deselect = square_selected
                     elif game.board.board[square_clicked] is not None and game.board.board[square_clicked].is_white == game.board.white_turn:
                         square_selected = square_clicked
+                        redraw_highlights = True
                     else:
                         move = game.move_input(square_selected, square_clicked)
-                        if isinstance(move, str):
-                            promoting = move
-                            continue
                         square_selected = None
+                        redraw_highlights = True
                         if move is not None:
                             last_move = move
-                    
+                            if move.promoting():
+                                promoting = move
                 case pg.MOUSEBUTTONUP:
                     mouse_down = False
                     square_clicked = None
@@ -280,6 +291,7 @@ def main():
                     
                     if pending_deselect is not None and square_clicked == pending_deselect:
                         square_selected = None
+                        redraw_highlights = True
                         pending_deselect = None
                         continue
                     
@@ -288,45 +300,51 @@ def main():
                     
                     if square_selected is not None:
                         move = game.move_input(square_selected, square_clicked)
-                        if isinstance(move, str):
-                            promoting = move
-                            continue
                         if move is not None:
                             square_selected = None
+                            redraw_highlights = True
                             last_move = move
+                            if move.promoting():
+                                promoting = move
         
         WIN.fill(colours['BLACK'])
 
-        squares = def_squares()
+        if first_frame or resized:
+            squares = def_squares()
+            images = def_images()
         draw_squares(squares)
         highlight_last_move(squares, last_move)
         highlight_selected(squares, square_selected)
-        images = def_images()
         WIN2_FACTOR = 3
-        WIN2 = pg.transform.scale(WIN2, tuple(map(lambda x: x*WIN2_FACTOR, pg.display.get_surface().get_size())))
-        WIN2.fill((0, 0, 0, 0))
-        if promoting is None:
-            highlight_available(squares, square_selected, game.board)
-        else:
-            highlight_promotion(squares, promoting)
-
-        WIN2 = pg.transform.smoothscale(WIN2, tuple(map(lambda x: x//WIN2_FACTOR, WIN2.get_size())))
+        if first_frame or redraw_highlights or resized:
+            WIN2 = pg.transform.scale(WIN2, tuple(map(lambda x: x*WIN2_FACTOR, pg.display.get_surface().get_size())))
+            WIN2.fill((0, 0, 0, 0))
+            if promoting is None and square_selected is not None:
+                highlight_available(squares, square_selected, game.board)
+            WIN2 = pg.transform.smoothscale(WIN2, pg.display.get_surface().get_size())
         WIN.blit(WIN2, (0, 0))
 
         WIN3.fill((0, 0, 0, 0))
-        WIN3 = pg.transform.scale(WIN3, pg.display.get_surface().get_size())
-        draw_pieces(squares, images, game.board, square_selected if mouse_down else None)
+        if resized: WIN3 = pg.transform.scale(WIN3, pg.display.get_surface().get_size())
+        draw_pieces(squares, images, game.board, square_selected if mouse_down else None, promoting)
+        if promoting is not None:
+            highlight_promotion(squares, promoting.end)
         WIN.blit(WIN3, (0, 0))
-        pg.display.flip()
+        pg.display.update()
         game_over = game.checks()
         if game_over:
             time.sleep(1)
             break
+        first_frame = False
     
-    game.print_score()
+    # game.print_score()
     pg.quit()
-
 
 if __name__ == '__main__':
     # main_text()
-    main()
+    # main()
+    import cProfile, pstats
+    cProfile.run('main()', 'profile')
+    stats = pstats.Stats('profile')
+    stats.strip_dirs().sort_stats('cumulative').print_stats()
+    os.remove('profile')

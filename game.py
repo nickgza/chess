@@ -140,7 +140,7 @@ class Game:
         print(f'White: {self.white_score}')
         print(f'Black: {self.black_score}')
 
-    def move_input(self, start: Move, end: Move) -> Move | str:
+    def move_input(self, start: Move, end: Move) -> None | Move:
         if start == end:
             return None
             
@@ -152,9 +152,9 @@ class Game:
         
         if self.board.board[start].piece_type == 'p':
             if self.board.board[start].is_white and end[1] == '8':
-                return end
+                return Move(start, end, '.')
             elif not self.board.board[start].is_white and end[1] == '1':
-                return end
+                return Move(start, end, '.')
         
         self.board.make_move(move)
         return move
