@@ -121,11 +121,18 @@ def main():
             'p': pg.transform.smoothscale(orig_images['p'], (square_dim, square_dim)),
         }
 
-    def draw_pieces(squares, images, board):
+    def draw_pieces(squares, images, board, dragged):
+        size = pg.display.get_surface().get_size()
+        dim = min(size)
+        half_square_dim = round(dim / 16)
         for square in squares:
             if board.board[square]:
                 tp = board.board[square].piece_type
-                WIN.blit(images[tp.upper() if board.board[square].is_white else tp], squares[square])
+                if square != dragged:
+                    WIN3.blit(images[tp.upper() if board.board[square].is_white else tp], squares[square])
+        if dragged is not None and board.board[dragged]:
+            tp = board.board[dragged].piece_type
+            WIN3.blit(images[tp.upper() if board.board[dragged].is_white else tp], tuple(map(lambda x: x - half_square_dim, pg.mouse.get_pos())))
     
     def highlight_available(squares, square_selected: str, board):
         if square_selected is None:
@@ -173,8 +180,12 @@ def main():
         return ' '
 
     WIDTH, HEIGHT = 520, 520
+    # Main surface
     WIN = pg.display.set_mode((WIDTH, HEIGHT), pg.HWSURFACE | pg.DOUBLEBUF | pg.RESIZABLE)
+    # Available moves
     WIN2 = pg.surface.Surface((WIDTH, HEIGHT), pg.SRCALPHA | pg.RESIZABLE)
+    # Pieces
+    WIN3 = pg.surface.Surface((WIDTH, HEIGHT), pg.SRCALPHA | pg.RESIZABLE)
     pg.display.set_caption('Chess')
     FPS = 60
 
@@ -211,6 +222,7 @@ def main():
     pending_deselect = None
     last_move = None
     promoting = None
+    mouse_down = False
 
     while run:
         clock.tick(FPS)
@@ -220,6 +232,7 @@ def main():
                 case pg.QUIT:
                     run = False
                 case pg.MOUSEBUTTONDOWN:
+                    mouse_down = True
                     square_clicked = None
                     pos = pg.mouse.get_pos()
                     for square, rect in squares.items():
@@ -257,6 +270,7 @@ def main():
                             last_move = move
                     
                 case pg.MOUSEBUTTONUP:
+                    mouse_down = False
                     square_clicked = None
                     pos = pg.mouse.get_pos()
                     for square, rect in squares.items():
@@ -288,7 +302,6 @@ def main():
         highlight_last_move(squares, last_move)
         highlight_selected(squares, square_selected)
         images = def_images()
-        draw_pieces(squares, images, game.board)
         WIN2_FACTOR = 3
         WIN2 = pg.transform.scale(WIN2, tuple(map(lambda x: x*WIN2_FACTOR, pg.display.get_surface().get_size())))
         WIN2.fill((0, 0, 0, 0))
@@ -297,8 +310,13 @@ def main():
         else:
             highlight_promotion(squares, promoting)
 
-        WIN2 = pg.transform.smoothscale(WIN2, tuple(map(lambda x: x/WIN2_FACTOR, WIN2.get_size())))
+        WIN2 = pg.transform.smoothscale(WIN2, tuple(map(lambda x: x//WIN2_FACTOR, WIN2.get_size())))
         WIN.blit(WIN2, (0, 0))
+
+        WIN3.fill((0, 0, 0, 0))
+        WIN3 = pg.transform.scale(WIN3, pg.display.get_surface().get_size())
+        draw_pieces(squares, images, game.board, square_selected if mouse_down else None)
+        WIN.blit(WIN3, (0, 0))
         pg.display.flip()
         game_over = game.checks()
         if game_over:
