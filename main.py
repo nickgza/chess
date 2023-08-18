@@ -274,12 +274,13 @@ def main():
                         redraw_highlights = True
                     else:
                         move = game.move_input(square_selected, square_clicked)
-                        square_selected = None
                         redraw_highlights = True
                         if move is not None:
-                            last_move = move
                             if move.promoting():
                                 promoting = move
+                                continue
+                            last_move = move
+                        square_selected = None
                 case pg.MOUSEBUTTONUP:
                     mouse_down = False
                     square_clicked = None
@@ -300,12 +301,13 @@ def main():
                     
                     if square_selected is not None:
                         move = game.move_input(square_selected, square_clicked)
+                        redraw_highlights = True
                         if move is not None:
-                            square_selected = None
-                            redraw_highlights = True
-                            last_move = move
                             if move.promoting():
                                 promoting = move
+                                continue
+                            last_move = move
+                        square_selected = None
         
         WIN.fill(colours['BLACK'])
 
@@ -342,9 +344,9 @@ def main():
 
 if __name__ == '__main__':
     # main_text()
-    # main()
-    import cProfile, pstats
-    cProfile.run('main()', 'profile')
-    stats = pstats.Stats('profile')
-    stats.strip_dirs().sort_stats('cumulative').print_stats()
-    os.remove('profile')
+    main()
+    # import cProfile, pstats
+    # cProfile.run('main()', 'profile')
+    # stats = pstats.Stats('profile')
+    # stats.strip_dirs().sort_stats('cumulative').print_stats()
+    # os.remove('profile')
